@@ -179,7 +179,7 @@ def trainer(X, C, stmodel,
 
             x, mask, ctx = homogeneous_data.prepare_data(x, c, worddict, stmodel, maxlen=maxlen_w, n_words=n_words)
 
-            if x.any() == None:
+            if x is None:
                 print ('Minibatch with zero sample under length ', maxlen_w)
                 uidx -= 1
                 continue
