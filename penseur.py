@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import cPickle as pickle
+import pickle as pickle
 import os, skipthoughts, penseur_utils
 
 class Penseur:
@@ -8,12 +8,12 @@ class Penseur:
 	def __init__(self, model_name=''):
 		self.loaded_custom_model = False
 		if model_name == '':
-			print 'Loading BookCorpus encoding model...'
+			print ('Loading BookCorpus encoding model...')
 			self.model = skipthoughts.load_model()
 			self.sentences = None
 			self.vectors = None
 		else:
-			print 'Loading custom encoding model: ' + model_name
+			print ('Loading custom encoding model: ' + model_name)
 			self.loaded_custom_model = True
 			self.model = penseur_utils.load_encoder(model_name)
 			self.sentences = pickle.load(open('data/' + model_name + '_sen.p', 'r'))
@@ -24,7 +24,7 @@ class Penseur:
 	# Loads both an encoding file and its sentences from disc
 	def load(self, filename):
 		self.vectors = np.load('data/' + filename + '_encoder.np', 'r')
-		self.sentences = pickle.load(open('data/' + filename + '_sen.p', 'r'))
+		self.sentences = pickle.load(open('data/' + filename + '_sen.p', 'rb'))
 
 	# Encodes a list of sentences
 	def encode(self, sentences):
@@ -38,8 +38,8 @@ class Penseur:
 	def save(self, filename):
 		if not os.path.exists('data/'):
 			os.makedirs('data')
-		np.save(open('data/' + filename + '_encoder.np', 'w'), self.vectors)
-		pickle.dump(self.sentences, open('data/' + filename + '_sen.p', 'w'))
+		np.save(open('data/' + filename + '_encoder.np', 'wb'), self.vectors)
+		pickle.dump(self.sentences, open('data/' + filename + '_sen.p', 'wb'))
 
 	# Returns a list of the sentences closest to the input sentence
 	def get_closest_sentences(self, query_sentence, num_results=5):
@@ -162,5 +162,6 @@ class Penseur:
 
 		plt.title("Flattened data")
 		plt.show()
+
 
 

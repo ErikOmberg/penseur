@@ -1,7 +1,7 @@
 """
 Constructing and loading dictionaries
 """
-import cPickle as pkl
+import pickle as pkl
 import numpy
 from collections import OrderedDict
 
@@ -17,8 +17,8 @@ def build_dictionary(text):
             if w not in wordcount:
                 wordcount[w] = 0
             wordcount[w] += 1
-    words = wordcount.keys()
-    freqs = wordcount.values()
+    words = list(wordcount.keys())
+    freqs = list(wordcount.values())
     sorted_idx = numpy.argsort(freqs)[::-1]
 
     worddict = OrderedDict()
@@ -42,5 +42,6 @@ def save_dictionary(worddict, wordcount, loc):
     with open(loc, 'wb') as f:
         pkl.dump(worddict, f)
         pkl.dump(wordcount, f)
+
 
 

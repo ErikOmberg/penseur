@@ -4,7 +4,7 @@ Main trainer function
 import theano
 import theano.tensor as tensor
 
-import cPickle as pkl
+import pickle as pkl
 import numpy
 import copy
 
@@ -61,26 +61,26 @@ def trainer(X,
     model_options['saveFreq'] = saveFreq
     model_options['reload_'] = reload_
 
-    print model_options
+    print (model_options)
 
     # reload options
     if reload_ and os.path.exists(saveto):
-        print 'reloading...' + saveto
+        print ('reloading...' + saveto)
         with open('%s.pkl'%saveto, 'rb') as f:
             models_options = pkl.load(f)
 
     # load dictionary
-    print 'Loading dictionary...'
+    print ('Loading dictionary...')
     worddict = load_dictionary(dictionary)
 
     # Inverse dictionary
     word_idict = dict()
-    for kk, vv in worddict.iteritems():
+    for kk, vv in worddict.items():
         word_idict[vv] = kk
     word_idict[0] = '<eos>'
     word_idict[1] = 'UNK'
 
-    print 'Building model'
+    print ('Building model')
     params = init_params(model_options)
     # reload parameters
     if reload_ and os.path.exists(saveto):
@@ -95,29 +95,29 @@ def trainer(X,
     inps = [x, x_mask, y, y_mask, z, z_mask]
 
     # before any regularizer
-    print 'Building f_log_probs...',
+    print ('Building f_log_probs...',)
     f_log_probs = theano.function(inps, cost, profile=False)
-    print 'Done'
+    print ('Done')
 
     # weight decay, if applicable
     if decay_c > 0.:
-        decay_c = theano.shared(numpy.float32(decay_c), name='decay_c')
+        decay_c = theano.shared(numpy.float32(decay_c), name='decay_c', borrow=True)
         weight_decay = 0.
-        for kk, vv in tparams.iteritems():
+        for kk, vv in tparams.items():
             weight_decay += (vv ** 2).sum()
         weight_decay *= decay_c
         cost += weight_decay
 
     # after any regularizer
-    print 'Building f_cost...',
+    print ('Building f_cost...',)
     f_cost = theano.function(inps, cost, profile=False)
-    print 'Done'
+    print ('Done')
 
-    print 'Done'
-    print 'Building f_grad...',
+    print ('Done')
+    print ('Building f_grad...',)
     grads = tensor.grad(cost, wrt=itemlist(tparams))
     f_grad_norm = theano.function(inps, [(g**2).sum() for g in grads], profile=False)
-    f_weight_norm = theano.function([], [(t**2).sum() for k,t in tparams.iteritems()], profile=False)
+    f_weight_norm = theano.function([], [(t**2).sum() for k,t in tparams.items()], profile=False)
 
     if grad_clip > 0.:
         g2 = 0.
@@ -131,11 +131,11 @@ def trainer(X,
         grads = new_grads
 
     lr = tensor.scalar(name='lr')
-    print 'Building optimizers...',
+    print ('Building optimizers...',)
     # (compute gradients), (updates parameters)
     f_grad_shared, f_update = eval(optimizer)(lr, tparams, grads, inps, cost)
 
-    print 'Optimization'
+    print ('Optimization')
 
     # Each sentence in the minibatch have same length (for encoder)
     trainX = homogeneous_data.grouper(X)
@@ -143,10 +143,10 @@ def trainer(X,
 
     uidx = 0
     lrate = 0.01
-    for eidx in xrange(max_epochs):
+    for eidx in range(max_epochs):
         n_samples = 0
 
-        print 'Epoch ', eidx
+        print ('Epoch ', eidx)
 
         for x, y, z in train_iter:
             n_samples += len(x)
@@ -154,8 +154,8 @@ def trainer(X,
 
             x, x_mask, y, y_mask, z, z_mask = homogeneous_data.prepare_data(x, y, z, worddict, maxlen=maxlen_w, n_words=n_words)
 
-            if x == None:
-                print 'Minibatch with zero sample under length ', maxlen_w
+            if x.any() == None:
+                print ('Minibatch with zero sample under length ', maxlen_w)
                 uidx -= 1
                 continue
 
@@ -165,23 +165,24 @@ def trainer(X,
             ud = time.time() - ud_start
 
             if numpy.isnan(cost) or numpy.isinf(cost):
-                print 'NaN detected'
+                print ('NaN detected')
                 return 1., 1., 1.
 
             if numpy.mod(uidx, dispFreq) == 0:
-                print 'Epoch ', eidx, 'Update ', uidx, 'Cost ', cost, 'UD ', ud
+                print ('Epoch ', eidx, 'Update ', uidx, 'Cost ', cost, 'UD ', ud)
 
             if numpy.mod(uidx, saveFreq) == 0:
-                print 'Saving...',
+                print ('Saving...',)
 
                 params = unzip(tparams)
                 numpy.savez(saveto, history_errs=[], **params)
                 pkl.dump(model_options, open('%s.pkl'%saveto, 'wb'))
-                print 'Done'
+                print ('Done')
 
-        print 'Seen %d samples'%n_samples
+        print ('Seen %d samples'%n_samples)
 
 if __name__ == '__main__':
     pass
+
 
 

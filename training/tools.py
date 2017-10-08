@@ -6,14 +6,14 @@ import theano
 import theano.tensor as tensor
 from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 
-import cPickle as pkl
+import pickle as pkl
 import numpy
 import nltk
 
 from collections import OrderedDict, defaultdict
 from nltk.tokenize import word_tokenize
 from scipy.linalg import norm
-from gensim.models import Word2Vec as word2vec
+from gensim.models import KeyedVectors
 from sklearn.linear_model import LinearRegression
 
 from utils import load_params, init_tparams
@@ -32,31 +32,31 @@ def load_model(path_to_model, path_to_dictionary, path_to_word2vec, embed_map=No
     Load all model components + apply vocab expansion
     """
     # Load the worddict
-    print 'Loading dictionary...'
+    print ('Loading dictionary...')
     with open(path_to_dictionary, 'rb') as f:
         worddict = pkl.load(f)
 
     # Create inverted dictionary
-    print 'Creating inverted dictionary...'
+    print ('Creating inverted dictionary...')
     word_idict = dict()
-    for kk, vv in worddict.iteritems():
+    for kk, vv in worddict.items():
         word_idict[vv] = kk
     word_idict[0] = '<eos>'
     word_idict[1] = 'UNK'
 
     # Load model options
-    print 'Loading model options...'
+    print ('Loading model options...')
     with open('%s.pkl'%path_to_model, 'rb') as f:
         options = pkl.load(f)
 
     # Load parameters
-    print 'Loading model parameters...'
+    print ('Loading model parameters...')
     params = init_params(options)
     params = load_params(path_to_model, params)
     tparams = init_tparams(params)
 
     # Extractor functions
-    print 'Compiling encoder...'
+    print ('Compiling encoder...')
     trng = RandomStreams(1234)
     trng, x, x_mask, ctx, emb = build_encoder(tparams, options)
     f_enc = theano.function([x, x_mask], ctx, name='f_enc')
@@ -66,15 +66,15 @@ def load_model(path_to_model, path_to_dictionary, path_to_word2vec, embed_map=No
 
     # Load word2vec, if applicable
     if embed_map == None:
-        print 'Loading word2vec embeddings...'
+        print ('Loading word2vec embeddings...')
         embed_map = load_googlenews_vectors(path_to_word2vec)
 
     # Lookup table using vocab expansion trick
-    print 'Creating word lookup tables...'
+    print ('Creating word lookup tables...')
     table = lookup_table(options, embed_map, worddict, word_idict, f_emb)
 
     # Store everything we need in a dictionary
-    print 'Packing up...'
+    print ('Packing up...')
     model = {}
     model['options'] = options
     model['table'] = table
@@ -104,7 +104,7 @@ def encode(model, X, use_norm=True, verbose=False, batch_size=128, use_eos=False
     # Get features. This encodes by length, in order to avoid wasting computation
     for k in ds.keys():
         if verbose:
-            print k
+            print (k)
         numbatches = len(ds[k]) / batch_size + 1
         for minibatch in range(numbatches):
             caps = ds[k][minibatch::numbatches]
@@ -153,7 +153,7 @@ def load_googlenews_vectors(path_to_word2vec):
     """
     load the word2vec GoogleNews vectors
     """
-    embed_map = word2vec.load_word2vec_format(path_to_word2vec, binary=True)
+    embed_map = KeyedVectors.load_word2vec_format(path_to_word2vec, binary=True)
     return embed_map
 
 def lookup_table(options, embed_map, worddict, word_idict, f_emb, use_norm=False):
@@ -194,7 +194,8 @@ def train_regressor(options, embed_map, wordvecs, worddict):
         d[w] = 1
     shared = OrderedDict()
     count = 0
-    for w in worddict.keys()[:options['n_words']-2]:
+    worddictKeys = list(worddict.keys())
+    for w in worddictKeys[:options['n_words']-2]:
         if d[w] > 0:
             shared[w] = count
             count += 1
@@ -221,6 +222,7 @@ def apply_regressor(clf, embed_map, use_norm=False):
             if use_norm:
                 wordvecs[w] /= norm(wordvecs[w])
     return wordvecs
+
 
 
 

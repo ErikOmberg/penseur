@@ -2,7 +2,7 @@
 # THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32 python
 
 import sys, os
-import cPickle as pickle
+import pickle as pickle
 
 def train_encoder(name_of_data, sentences, max_epochs=5, save_frequency=1000):
 	if not os.path.exists('data/'):
@@ -11,7 +11,7 @@ def train_encoder(name_of_data, sentences, max_epochs=5, save_frequency=1000):
 	import vocab
 	worddict, wordcount = vocab.build_dictionary(sentences)
 	vocab.save_dictionary(worddict, wordcount, 'data/' + name_of_data + '_dictionary.pkl')
-	pickle.dump(sentences, open('data/' + name_of_data + '_sen.p', 'w'))
+	pickle.dump(sentences, open('data/' + name_of_data + '_sen.p', 'wb'))
 	with open('training/train.py', 'r') as f:
 		text = f.read()
 		text = text.replace('max_epochs=5', 'max_epochs=' + str(max_epochs))
@@ -74,4 +74,5 @@ def decode(decoder, vector, num_results=1):
 	if num_results == 1:
 		return sentences[0]
 	return sentences
+
 

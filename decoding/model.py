@@ -95,7 +95,7 @@ def build_sampler(tparams, options, trng):
     ctx = tensor.matrix('ctx', dtype='float32')
     ctx0 = ctx
 
-    print 'Building f_init...',
+    print ('Building f_init...',)
     init_state = get_layer('ff')[1](tparams, ctx, options, prefix='ff_state', activ='tanh')
     f_init = theano.function([ctx], init_state, name='f_init', profile=False)
 
@@ -124,12 +124,13 @@ def build_sampler(tparams, options, trng):
     next_sample = trng.multinomial(pvals=next_probs).argmax(1)
 
     # next word probability
-    print 'Building f_next..',
+    print ('Building f_next..',)
     inps = [y, init_state]
     outs = [next_probs, next_sample, next_state]
     f_next = theano.function(inps, outs, name='f_next', profile=False)
-    print 'Done'
+    print ('Done')
 
     return f_init, f_next
+
 
 
